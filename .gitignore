@@ -1,0 +1,7 @@
+/packages
+/src/AndroidBackups.ConsoleApp/bin
+/src/AndroidBackups.ConsoleApp/obj
+/src/AndroidBackups.UI/bin
+/src/AndroidBackups.UI/obj
+/src/PortableDevicesLib/bin
+/src/PortableDevicesLib/obj
