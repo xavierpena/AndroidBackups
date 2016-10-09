@@ -11,7 +11,18 @@
             <TextBlock>
                 Select device:
             </TextBlock>
-            <ListBox Name="Devices" ItemsSource="{Binding Devices}"></ListBox>
+            <ComboBox Name="Devices" 
+                     ItemsSource="{Binding Devices}"
+                     SelectedItem="{Binding SelectedDevice}" >
+            </ComboBox>
+            <TreeView Name="FileTree"
+                      Height="180px">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding RootFileItem}">
+                        <TextBlock Text="{Binding Header}" />
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
             <Button Name="DoBackupBtn" Width="100" Height="40">Start backup</Button>
         </StackPanel>
     </Grid>
