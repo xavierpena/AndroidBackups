@@ -15,10 +15,12 @@ namespace AndroidBackups.ConsoleApp2
         {
             try
             {
+                // Get the only connected MTP device:                
                 var service = new StandardPortableDevicesService();
                 var devices = service.Devices;
-                var device = devices.First();                               
+                var device = devices.Single();                               
 
+                // Start the backup:
                 ProcessDeviceBackup(device);
             }
             catch (Exception ex)

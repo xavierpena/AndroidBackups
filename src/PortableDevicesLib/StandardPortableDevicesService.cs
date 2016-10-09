@@ -33,7 +33,6 @@ namespace PortableDevicesLib
 
                 List<Domain.PortableDevice> devices = new List<Domain.PortableDevice>();
                 foreach(string deviceId in deviceIds) {
-                    
                     devices.Add(new Domain.PortableDevice(deviceId));
                 }
                 

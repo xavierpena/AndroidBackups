@@ -16,6 +16,17 @@ using PortableDevicesLib;
 namespace PortableDevicesLib.Domain
 {
 
+    /// <summary>
+    /// Source: https://msdn.microsoft.com/en-us/library/windows/hardware/ff597867(v=vs.85).aspx
+    /// </summary>
+    public enum WPD_DEVICE_TYPES
+    {
+        GENERIC = 0,
+        CAMERA = 1,
+        MEDIA_PLAYER = 2,
+        PHONE = 3
+    };
+
     public class PortableDevice
     {
         private ILog l = LogManager.GetLogger(typeof(PortableDevice));
@@ -23,18 +34,24 @@ namespace PortableDevicesLib.Domain
         private readonly PortableDeviceClass _device;
         private bool _isConnected;
 
+        public string DeviceID { get; set; }
+
+        public string FriendlyName { get; set; }
+        public string Model { get; set; }
+        public WPD_DEVICE_TYPES Type { get; set; }
+        public string Manufacturer { get; set; }
+
         public PortableDevice(string deviceID)
         {
             this.DeviceID = deviceID;
             _device = new PortableDeviceClass();
+
+            Connect();
+            GetPropertiesFromDevice();
+            Disconnect();
+
             _isConnected = false;
         }
-
-        public string DeviceID { get; set; }
-
-        public string FriendlyName { get; set; }
-
-        public int DeviceType { get; set; }
 
         void ValidateConnection()
         {
@@ -50,9 +67,6 @@ namespace PortableDevicesLib.Domain
             var clientInfo = (IPortableDeviceValues)new PortableDeviceTypesLib.PortableDeviceValuesClass();
             _device.Open(DeviceID, clientInfo);
             _isConnected = true;
-
-            GetPropertiesFromDevice();
-
         }
 
         public void Disconnect()
@@ -61,6 +75,7 @@ namespace PortableDevicesLib.Domain
             _device.Close();
             _isConnected = false;
         }
+
         private void GetPropertiesFromDevice()
         {
             // Retrieve the properties of the device
@@ -73,15 +88,22 @@ namespace PortableDevicesLib.Domain
             IPortableDeviceValues propertyValues;
             properties.GetValues("DEVICE", null, out propertyValues);
 
-            // Retrieve the friendly name
-            string deviceName;
-            propertyValues.GetStringValue(ref DevicePropertyKeys.WPD_DEVICE_FRIENDLY_NAME, out deviceName);
-            this.FriendlyName = deviceName;
+            // Retrieve speciffic values:
+            string friendlyName;
+            propertyValues.GetStringValue(ref DevicePropertyKeys.WPD_DEVICE_FRIENDLY_NAME, out friendlyName);
+            this.FriendlyName = friendlyName;
 
-            // Retrieve the type of device
+            string deviceModel;
+            propertyValues.GetStringValue(ref DevicePropertyKeys.WPD_DEVICE_MODEL, out deviceModel);                        
+            this.Model = deviceModel;
+
             int deviceType;
             propertyValues.GetSignedIntegerValue(ref DevicePropertyKeys.WPD_DEVICE_TYPE, out deviceType);
-            this.DeviceType = deviceType;
+            this.Type = (WPD_DEVICE_TYPES)deviceType;
+
+            string deviceManufacturer;
+            propertyValues.GetStringValue(ref DevicePropertyKeys.WPD_DEVICE_MANUFACTURER, out deviceManufacturer);
+            this.Manufacturer = deviceManufacturer;
         }
 
         public PortableDeviceFolder GetContents(PortableDeviceFolder parent = null)
@@ -222,23 +244,7 @@ namespace PortableDevicesLib.Domain
 
         public override string ToString()
         {
-
-            bool shouldDisconnect = false;
-            if (_device == null)
-            {
-
-                Connect();
-                shouldDisconnect = true;
-            }
-            string toString = FriendlyName;
-
-            if (shouldDisconnect)
-            {
-
-                Disconnect();
-            }
-
-            return toString;
+            return $"{this.FriendlyName} - {this.Manufacturer} {this.Model} ({this.Type.ToString()})";
         }
 
         public PortableDeviceObject GetObject(string parentID, string objectID)
