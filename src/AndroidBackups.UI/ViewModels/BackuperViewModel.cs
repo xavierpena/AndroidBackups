@@ -1,4 +1,6 @@
 ﻿using AndroidBackups.UI.Models;
+using PortableDevicesLib;
+using PortableDevicesLib.Domain;
 using Prism.Commands;
 using System;
 using System.Collections.Generic;
@@ -13,6 +15,20 @@ namespace AndroidBackups.UI.ViewModels
     public class BackuperViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+
+        private IList<PortableDevice> _devices;
+        public IList<PortableDevice> Devices
+        {
+            get { return _devices; }
+            set
+            {
+                if (_devices != value)
+                {
+                    _devices = value;
+                    OnPropertyChanged(nameof(Devices));
+                }
+            }
+        }
 
         private IList<SourceFolder> _sourceFolders;
         public IList<SourceFolder> SourceFolders
@@ -33,7 +49,10 @@ namespace AndroidBackups.UI.ViewModels
 
         public BackuperViewModel()
         {
-            InitSourceFolders();
+            // Get the only connected MTP device:                
+            var service = new StandardPortableDevicesService();
+            this.Devices = service.Devices;
+            //InitSourceFolders();
 
             // Delegates:
             //_openConfigurationFileCommand = new DelegateCommand(() => _episodeRepository.OpenConfigurationFile());

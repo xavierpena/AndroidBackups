@@ -7,6 +7,12 @@
         mc:Ignorable="d"
         Title="Backuper" Height="300" Width="300">
     <Grid>
-        <Button Name="DoBackupBtn" Width="100" Height="40">Start backup</Button>
+        <StackPanel>
+            <TextBlock>
+                Select device:
+            </TextBlock>
+            <ListBox Name="Devices" ItemsSource="{Binding Devices}"></ListBox>
+            <Button Name="DoBackupBtn" Width="100" Height="40">Start backup</Button>
+        </StackPanel>
     </Grid>
 </Window>
