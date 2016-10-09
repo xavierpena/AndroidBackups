@@ -1,12 +1,13 @@
-﻿using PortableDevices;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using PortableDevicesLib;
+using PortableDevicesLib.Domain;
 
-namespace AndroidBackups.ConsoleApp
+namespace AndroidBackups.ConsoleApp2
 {
     class Program
     {
@@ -14,11 +15,11 @@ namespace AndroidBackups.ConsoleApp
         {
             try
             {
-                var deviceIds = PortableDeviceClient.GetAllDeviceIds();
-                var deviceId = deviceIds.Values.First();
-                var portableDeviceClient = new PortableDeviceClient(deviceId);
+                var service = new StandardPortableDevicesService();
+                var devices = service.Devices;
+                var device = devices.First();                               
 
-                ProcessDeviceBackup(portableDeviceClient);
+                ProcessDeviceBackup(device);
             }
             catch (Exception ex)
             {
@@ -26,10 +27,12 @@ namespace AndroidBackups.ConsoleApp
             }
         }
 
-        private static void ProcessDeviceBackup(PortableDeviceClient portableDeviceClient)
+        private static void ProcessDeviceBackup(PortableDevice device)
         {
+            var portableDeviceService = new PortableDeviceService(device);
+
             Console.WriteLine($"Loading device contents ...");
-            portableDeviceClient.LoadDeviceContents();
+            portableDeviceService.LoadDeviceContents();
 
             var sourceFolderFullPaths = new string[] {
                 @"Internal storage\WhatsApp\Media\WhatsApp Images",
@@ -43,10 +46,10 @@ namespace AndroidBackups.ConsoleApp
             {
                 var folderName = sourceFolder.Split('\\').Last();
                 Console.WriteLine($"Processing folder '{folderName}' ...");
-                var mtpFolder = portableDeviceClient.GetSubFolder(sourceFolder);
+                var mtpFolder = portableDeviceService.GetSubFolder(sourceFolder);
                 var destinationFolderFullPath = Path.Combine(baseDestinationFolder, folderName);
                 TryRecreateFolder(destinationFolderFullPath);
-                portableDeviceClient.CopyFolder(mtpFolder, destinationFolderFullPath);
+                portableDeviceService.CopyFolder(mtpFolder, destinationFolderFullPath);
             }
             Console.WriteLine("Done");
         }

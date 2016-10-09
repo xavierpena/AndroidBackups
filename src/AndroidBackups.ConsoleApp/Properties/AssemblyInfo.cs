@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("AndroidBackups.ConsoleApp")]
+[assembly: AssemblyTitle("AndroidBackups.ConsoleApp2")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("AndroidBackups.ConsoleApp")]
+[assembly: AssemblyProduct("AndroidBackups.ConsoleApp2")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a80b1648-ff29-460e-83ea-b233b91aa57a")]
+[assembly: Guid("063ccdbd-69a0-485d-a363-03d9dc0d4445")]
 
 // Version information for an assembly consists of the following four values:
 //

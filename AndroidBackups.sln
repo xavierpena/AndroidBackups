@@ -5,9 +5,9 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidBackups.UI", "src\AndroidBackups.UI\AndroidBackups.UI.csproj", "{BD87477A-4565-43E8-8643-0ADED5424B36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortableDevicesLib", "src\PortableDevicesLib\PortableDevicesLib.csproj", "{54A55C7D-0660-48C1-ADC3-C4CD1BD39B86}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortableDevicesLib", "src\PortableDevicesLib\PortableDevicesLib.csproj", "{7C07331D-5E7D-45B0-BE40-510535606FFA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidBackups.ConsoleApp", "src\AndroidBackups.ConsoleApp\AndroidBackups.ConsoleApp.csproj", "{A80B1648-FF29-460E-83EA-B233B91AA57A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidBackups.ConsoleApp", "src\AndroidBackups.ConsoleApp\AndroidBackups.ConsoleApp.csproj", "{063CCDBD-69A0-485D-A363-03D9DC0D4445}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,21 +25,21 @@ Global
 		{BD87477A-4565-43E8-8643-0ADED5424B36}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BD87477A-4565-43E8-8643-0ADED5424B36}.Release|x86.ActiveCfg = Release|Any CPU
 		{BD87477A-4565-43E8-8643-0ADED5424B36}.Release|x86.Build.0 = Release|Any CPU
-		{54A55C7D-0660-48C1-ADC3-C4CD1BD39B86}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{54A55C7D-0660-48C1-ADC3-C4CD1BD39B86}.Debug|Any CPU.Build.0 = Debug|x86
-		{54A55C7D-0660-48C1-ADC3-C4CD1BD39B86}.Debug|x86.ActiveCfg = Debug|x86
-		{54A55C7D-0660-48C1-ADC3-C4CD1BD39B86}.Debug|x86.Build.0 = Debug|x86
-		{54A55C7D-0660-48C1-ADC3-C4CD1BD39B86}.Release|Any CPU.ActiveCfg = Release|x86
-		{54A55C7D-0660-48C1-ADC3-C4CD1BD39B86}.Release|x86.ActiveCfg = Release|x86
-		{54A55C7D-0660-48C1-ADC3-C4CD1BD39B86}.Release|x86.Build.0 = Release|x86
-		{A80B1648-FF29-460E-83EA-B233B91AA57A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A80B1648-FF29-460E-83EA-B233B91AA57A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A80B1648-FF29-460E-83EA-B233B91AA57A}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{A80B1648-FF29-460E-83EA-B233B91AA57A}.Debug|x86.Build.0 = Debug|Any CPU
-		{A80B1648-FF29-460E-83EA-B233B91AA57A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A80B1648-FF29-460E-83EA-B233B91AA57A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A80B1648-FF29-460E-83EA-B233B91AA57A}.Release|x86.ActiveCfg = Release|Any CPU
-		{A80B1648-FF29-460E-83EA-B233B91AA57A}.Release|x86.Build.0 = Release|Any CPU
+		{7C07331D-5E7D-45B0-BE40-510535606FFA}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{7C07331D-5E7D-45B0-BE40-510535606FFA}.Debug|Any CPU.Build.0 = Debug|x86
+		{7C07331D-5E7D-45B0-BE40-510535606FFA}.Debug|x86.ActiveCfg = Debug|x86
+		{7C07331D-5E7D-45B0-BE40-510535606FFA}.Debug|x86.Build.0 = Debug|x86
+		{7C07331D-5E7D-45B0-BE40-510535606FFA}.Release|Any CPU.ActiveCfg = Release|x86
+		{7C07331D-5E7D-45B0-BE40-510535606FFA}.Release|x86.ActiveCfg = Release|x86
+		{7C07331D-5E7D-45B0-BE40-510535606FFA}.Release|x86.Build.0 = Release|x86
+		{063CCDBD-69A0-485D-A363-03D9DC0D4445}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{063CCDBD-69A0-485D-A363-03D9DC0D4445}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{063CCDBD-69A0-485D-A363-03D9DC0D4445}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{063CCDBD-69A0-485D-A363-03D9DC0D4445}.Debug|x86.Build.0 = Debug|Any CPU
+		{063CCDBD-69A0-485D-A363-03D9DC0D4445}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{063CCDBD-69A0-485D-A363-03D9DC0D4445}.Release|Any CPU.Build.0 = Release|Any CPU
+		{063CCDBD-69A0-485D-A363-03D9DC0D4445}.Release|x86.ActiveCfg = Release|Any CPU
+		{063CCDBD-69A0-485D-A363-03D9DC0D4445}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -5,48 +5,29 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PortableDevices
+namespace PortableDevicesLib.Domain
 {
 
     /// <summary>
     /// Xavier Peña, 2016-10-07
     /// </summary>
-    public class PortableDeviceClient
+    public class PortableDeviceService
     {
         private PortableDevice _device;
         private PortableDeviceFolder _deviceContents;
-        public PortableDeviceClient(string deviceId)
+        public PortableDeviceService(PortableDevice device)
         {
-            _device = new PortableDevice(deviceId);
-            _device.Connect();
+            _device = device;
         }
-
-        public void Close()
-        {
-            _device.Disconnect();
-        }
-
-        public static IDictionary<string, string> GetAllDeviceIds()
-        {
-            var deviceIds = new Dictionary<string, string>();
-            var devices = new PortableDeviceCollection();
-            devices.Refresh();
-            foreach (var device in devices)
-            {
-                device.Connect();
-                deviceIds.Add(device.FriendlyName, device.DeviceId);
-                Console.WriteLine(@"DeviceId: {0}, FriendlyName: {1}", device.DeviceId, device.FriendlyName);                
-                device.Disconnect();
-            }
-            return deviceIds;
-        }
-
+        
         /// <summary>
         /// This function may take a while to complete. It retrieves all the file structure from the device.
         /// </summary>
         public void LoadDeviceContents()
         {
-            _deviceContents = _device.GetContents();
+            _device.Connect();
+            _deviceContents = _device.GetFullContents();
+            _device.Disconnect();
         }
 
         /// <summary>
@@ -113,7 +94,6 @@ namespace PortableDevices
                 else
                 {
                     var file = (PortableDeviceFile)portableDeviceObject;
-                    //var destinationFilePath = Path.Combine(destinationWindowsFolderPath, file.Name);
                     _device.Connect();
                     _device.DownloadFile(file, destinationWindowsFolderPath);
                     _device.Disconnect();

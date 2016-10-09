@@ -1,12 +1,28 @@
-﻿namespace PortableDevices
+﻿/*
+ * Created by SharpDevelop.
+ * User: jaran
+ * Date: 08.11.2012
+ * Time: 18:41
+ * 
+ * To change this template use Tools | Options | Coding | Edit Standard Headers.
+ */
+using System;
+
+namespace PortableDevicesLib.Domain
 {
-    public abstract class PortableDeviceObject
+    /// <summary>
+    /// Description of PortableDeviceObject.
+    /// </summary>
+    public class PortableDeviceObject
     {
+                
         protected PortableDeviceObject(string id, string name)
         {
             this.Id = id;
             this.Name = name;
         }
+
+        public string PersistentId { get; set; }
 
         public string Id { get; private set; }
 

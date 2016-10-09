@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A80B1648-FF29-460E-83EA-B233B91AA57A}</ProjectGuid>
+    <ProjectGuid>{063CCDBD-69A0-485D-A363-03D9DC0D4445}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AndroidBackups.ConsoleApp</RootNamespace>
-    <AssemblyName>AndroidBackups.ConsoleApp</AssemblyName>
+    <RootNamespace>AndroidBackups.ConsoleApp2</RootNamespace>
+    <AssemblyName>AndroidBackups.ConsoleApp2</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -51,7 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PortableDevicesLib\PortableDevicesLib.csproj">
-      <Project>{54a55c7d-0660-48c1-adc3-c4cd1bd39b86}</Project>
+      <Project>{7c07331d-5e7d-45b0-be40-510535606ffa}</Project>
       <Name>PortableDevicesLib</Name>
     </ProjectReference>
   </ItemGroup>

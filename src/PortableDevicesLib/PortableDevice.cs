@@ -1,114 +1,357 @@
-﻿using System;
-using System.IO;
-using System.Collections.Generic;
+﻿/*
+ * Created by SharpDevelop.
+ * User: jaran
+ * Date: 05.11.2012
+ * Time: 19:12
+ * 
+ * To change this template use Tools | Options | Coding | Edit Standard Headers.
+ */
+using System;
 using PortableDeviceApiLib;
-using PortableDeviceTypesLib;
-using _tagpropertykey = PortableDeviceApiLib._tagpropertykey;
-using IPortableDeviceKeyCollection = PortableDeviceApiLib.IPortableDeviceKeyCollection;
-using IPortableDeviceValues = PortableDeviceApiLib.IPortableDeviceValues;
-using System.Runtime.InteropServices;
+using Common.Logging;
+using System.IO;
+using System.Linq;
+using PortableDevicesLib;
 
-namespace PortableDevices
+namespace PortableDevicesLib.Domain
 {
+
     public class PortableDevice
     {
-        #region Fields
+        private ILog l = LogManager.GetLogger(typeof(PortableDevice));
 
-        private bool _isConnected;
         private readonly PortableDeviceClass _device;
+        private bool _isConnected;
 
-        #endregion
-
-        #region ctor(s)
-
-        public PortableDevice(string deviceId)
+        public PortableDevice(string deviceID)
         {
-            this._device = new PortableDeviceClass();
-            this.DeviceId = deviceId;
+            this.DeviceID = deviceID;
+            _device = new PortableDeviceClass();
+            _isConnected = false;
         }
 
-        #endregion
+        public string DeviceID { get; set; }
 
-        #region Properties
+        public string FriendlyName { get; set; }
 
-        public string DeviceId { get; set; }
+        public int DeviceType { get; set; }
 
-        public string FriendlyName
+        void ValidateConnection()
         {
-            get
+            if (_device == null)
             {
-                if (!this._isConnected)
-                {
-                    throw new InvalidOperationException("Not connected to device.");
-                }
-
-                // Retrieve the properties of the device
-                IPortableDeviceContent content;
-                IPortableDeviceProperties properties;
-                this._device.Content(out content);
-                content.Properties(out properties);
-
-                // Retrieve the values for the properties
-                IPortableDeviceValues propertyValues;
-                properties.GetValues("DEVICE", null, out propertyValues);
-
-                // Identify the property to retrieve
-                var property = new _tagpropertykey();
-                property.fmtid = new Guid(0x26D4979A, 0xE643, 0x4626, 0x9E, 0x2B,
-                                          0x73, 0x6D, 0xC0, 0xC9, 0x2F, 0xDC);
-                property.pid = 12;
-
-                // Retrieve the friendly name
-                string propertyValue;
-                propertyValues.GetStringValue(ref property, out propertyValue);
-
-                return propertyValue;
+                throw new InvalidOperationException("Not connected to device.");
             }
         }
-
-        internal PortableDeviceClass PortableDeviceClass
-        {
-            get
-            {
-                return this._device;
-            }
-        }
-
-        #endregion
-
-        #region Methods
 
         public void Connect()
         {
             if (this._isConnected) { return; }
+            var clientInfo = (IPortableDeviceValues)new PortableDeviceTypesLib.PortableDeviceValuesClass();
+            _device.Open(DeviceID, clientInfo);
+            _isConnected = true;
 
-            var clientInfo = (IPortableDeviceValues)new PortableDeviceValuesClass();
-            this._device.Open(this.DeviceId, clientInfo);
-            this._isConnected = true;
+            GetPropertiesFromDevice();
+
         }
 
         public void Disconnect()
         {
-            if (!this._isConnected) { return; }
-            this._device.Close();
-            this._isConnected = false;
+            if (!_isConnected) { return; }
+            _device.Close();
+            _isConnected = false;
+        }
+        private void GetPropertiesFromDevice()
+        {
+            // Retrieve the properties of the device
+            IPortableDeviceContent content;
+            IPortableDeviceProperties properties;
+            _device.Content(out content);
+            content.Properties(out properties);
+
+            // Retrieve the values for the properties
+            IPortableDeviceValues propertyValues;
+            properties.GetValues("DEVICE", null, out propertyValues);
+
+            // Retrieve the friendly name
+            string deviceName;
+            propertyValues.GetStringValue(ref DevicePropertyKeys.WPD_DEVICE_FRIENDLY_NAME, out deviceName);
+            this.FriendlyName = deviceName;
+
+            // Retrieve the type of device
+            int deviceType;
+            propertyValues.GetSignedIntegerValue(ref DevicePropertyKeys.WPD_DEVICE_TYPE, out deviceType);
+            this.DeviceType = deviceType;
         }
 
-        public PortableDeviceFolder GetContents()
+        public PortableDeviceFolder GetContents(PortableDeviceFolder parent = null)
         {
+            ValidateConnection();
             var root = new PortableDeviceFolder("DEVICE", "DEVICE");
+            if (parent != null)
+            {
+                root = parent;
+            }
 
             IPortableDeviceContent content;
-            this._device.Content(out content);
-
-            EnumerateContents(ref content, root);
+            _device.Content(out content);
+            EnumerateContentsOfParent(ref content, root);
 
             return root;
         }
 
-        private static void EnumerateContents(ref IPortableDeviceContent content,
-            PortableDeviceFolder parent)
+        public PortableDeviceFolder GetFullContents(PortableDeviceFolder parent = null)
         {
+            ValidateConnection();
+            var root = new PortableDeviceFolder("DEVICE", "DEVICE");
+            if (parent != null)
+            {
+                root = parent;
+            }
+
+            IPortableDeviceContent content;
+            _device.Content(out content);
+            EnumerateContentsRecursive(ref content, root);
+
+            return root;
+        }
+
+        public void DownloadFile(PortableDeviceFile file, string saveToPath)
+        {
+            IPortableDeviceContent content;
+            _device.Content(out content);
+
+            IPortableDeviceResources resources;
+            content.Transfer(out resources);
+
+            PortableDeviceApiLib.IStream wpdStream;
+            uint optimalTransferSize = 0;
+
+            resources.GetStream(file.Id, ref DevicePropertyKeys.WPD_RESOURCE_DEFAULT, 0, ref optimalTransferSize, out wpdStream);
+
+            var sourceStream = (System.Runtime.InteropServices.ComTypes.IStream)wpdStream;
+
+            var filename = Path.GetFileName(file.Name);
+            FileStream targetStream = new FileStream(Path.Combine(saveToPath, filename), FileMode.Create, FileAccess.Write);
+
+            unsafe
+            {
+                var buffer = new byte[1024];
+                int bytesRead;
+                do
+                {
+                    sourceStream.Read(buffer, 1024, new IntPtr(&bytesRead));
+                    targetStream.Write(buffer, 0, 1024);
+                } while (bytesRead > 0);
+                targetStream.Close();
+            }
+        }
+
+        public void TransferContentToDevice(string fileName,
+                                            string parentObjectId)
+        {
+
+            IPortableDeviceContent content;
+            _device.Content(out content);
+
+            IPortableDeviceValues values =
+                GetRequiredPropertiesForContentType(fileName, parentObjectId);
+
+            PortableDeviceApiLib.IStream tempStream;
+            uint optimalTransferSizeBytes = 0;
+            content.CreateObjectWithPropertiesAndData(
+                values,
+                out tempStream,
+                ref optimalTransferSizeBytes,
+                null);
+
+            System.Runtime.InteropServices.ComTypes.IStream targetStream =
+                (System.Runtime.InteropServices.ComTypes.IStream)tempStream;
+
+            try
+            {
+                using (var sourceStream =
+                       new FileStream(fileName, FileMode.Open, FileAccess.Read))
+                {
+                    var buffer = new byte[optimalTransferSizeBytes];
+                    int bytesRead;
+                    do
+                    {
+                        bytesRead = sourceStream.Read(
+                            buffer, 0, (int)optimalTransferSizeBytes);
+                        IntPtr pcbWritten = IntPtr.Zero;
+                        if (bytesRead < (int)optimalTransferSizeBytes)
+                        {
+                            targetStream.Write(buffer, bytesRead, pcbWritten);
+                        }
+                        else
+                        {
+                            targetStream.Write(buffer, (int)optimalTransferSizeBytes, pcbWritten);
+                        }
+
+                    } while (bytesRead > 0);
+                }
+                targetStream.Commit(0);
+            }
+            finally
+            {
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(tempStream);
+            }
+        }
+
+        private IPortableDeviceValues GetRequiredPropertiesForContentType(
+            string fileName,
+            string parentObjectId)
+        {
+            IPortableDeviceValues values =
+                new PortableDeviceTypesLib.PortableDeviceValues() as IPortableDeviceValues;
+
+            values.SetStringValue(ref DevicePropertyKeys.WPD_OBJECT_PARENT_ID, parentObjectId);
+
+            FileInfo fileInfo = new FileInfo(fileName);
+            values.SetUnsignedLargeIntegerValue(DevicePropertyKeys.WPD_OBJECT_SIZE, (ulong)fileInfo.Length);
+
+            values.SetStringValue(DevicePropertyKeys.WPD_OBJECT_ORIGINAL_FILE_NAME, Path.GetFileName(fileName));
+
+            values.SetStringValue(DevicePropertyKeys.WPD_OBJECT_NAME, Path.GetFileName(fileName));
+
+            values.SetBoolValue(DevicePropertyKeys.WPD_OBJECT_CAN_DELETE, 1);
+
+            return values;
+        }
+
+        public override string ToString()
+        {
+
+            bool shouldDisconnect = false;
+            if (_device == null)
+            {
+
+                Connect();
+                shouldDisconnect = true;
+            }
+            string toString = FriendlyName;
+
+            if (shouldDisconnect)
+            {
+
+                Disconnect();
+            }
+
+            return toString;
+        }
+
+        public PortableDeviceObject GetObject(string parentID, string objectID)
+        {
+
+            IPortableDeviceContent content;
+            _device.Content(out content);
+
+            // Get the properties of the object
+            IPortableDeviceProperties properties;
+            content.Properties(out properties);
+
+            if (parentID == null || parentID.Length == 0)
+            {
+                parentID = DeviceID;
+            }
+
+            // Enumerate the items contained by the current object
+            IEnumPortableDeviceObjectIDs objectIds;
+            content.EnumObjects(0, parentID, null, out objectIds);
+
+            uint fetched = 0;
+            do
+            {
+                string objectId;
+
+                objectIds.Next(1, out objectId, ref fetched);
+                if (fetched > 0)
+                {
+                    if (objectId.Equals(objectID))
+                    {
+
+                        PortableDeviceObject deviceObject = WrapObject(properties, objectId);
+                        if (deviceObject.GetType() == typeof(PortableDeviceFolder))
+                        {
+                            EnumerateContentsOfParent(ref content, (PortableDeviceFolder)deviceObject);
+
+                        }
+                        return deviceObject;
+                    }
+
+
+                }
+            } while (fetched > 0);
+
+            return null;
+        }
+
+        public string CreateFolder(string parentPersistentID, string folderName)
+        {
+
+            IPortableDeviceContent content;
+            _device.Content(out content);
+
+            // Get the properties of the object
+            IPortableDeviceProperties properties;
+            content.Properties(out properties);
+
+            if (parentPersistentID == null)
+            {
+                parentPersistentID = DeviceID;
+            }
+
+            IPortableDeviceValues createFolderValues = new PortableDeviceTypesLib.PortableDeviceValues() as IPortableDeviceValues;
+            createFolderValues.SetStringValue(DevicePropertyKeys.WPD_OBJECT_PARENT_ID, parentPersistentID);
+            createFolderValues.SetStringValue(DevicePropertyKeys.WPD_OBJECT_NAME, folderName);
+            createFolderValues.SetStringValue(DevicePropertyKeys.WPD_OBJECT_ORIGINAL_FILE_NAME, folderName);
+            createFolderValues.SetGuidValue(DevicePropertyKeys.WPD_OBJECT_CONTENT_TYPE, DeviceGUIDS.WPD_CONTENT_TYPE_FOLDER);
+            createFolderValues.SetGuidValue(DevicePropertyKeys.WPD_OBJECT_FORMAT, DeviceGUIDS.WPD_OBJECT_FORMAT_PROPERTIES_ONLY);
+
+            string newFolderId = "";
+            content.CreateObjectWithPropertiesOnly(createFolderValues, ref newFolderId);
+
+            return newFolderId;
+        }
+
+        private static void EnumerateContentsRecursive(ref IPortableDeviceContent content,
+                                              PortableDeviceFolder parent)
+        {
+            // Get the properties of the object
+            IPortableDeviceProperties properties;
+            content.Properties(out properties);
+
+
+
+            // Enumerate the items contained by the current object
+            IEnumPortableDeviceObjectIDs objectIds;
+            content.EnumObjects(0, parent.Id, null, out objectIds);
+
+            uint fetched = 0;
+            do
+            {
+                string objectId;
+
+                objectIds.Next(1, out objectId, ref fetched);
+                if (fetched > 0)
+                {
+                    var currentObject = WrapObject(properties, objectId);
+
+                    parent.Files.Add(currentObject);
+
+                    if (currentObject is PortableDeviceFolder)
+                    {
+                        EnumerateContentsRecursive(ref content, (PortableDeviceFolder)currentObject);
+                    }
+                }
+            } while (fetched > 0);
+        }
+
+        private static void EnumerateContentsOfParent(ref IPortableDeviceContent content,
+                                              PortableDeviceFolder parent)
+        {
+
             // Get the properties of the object
             IPortableDeviceProperties properties;
             content.Properties(out properties);
@@ -129,123 +372,12 @@ namespace PortableDevices
 
                     parent.Files.Add(currentObject);
 
-                    if (currentObject is PortableDeviceFolder)
-                    {
-                        EnumerateContents(ref content, (PortableDeviceFolder)currentObject);
-                    }
                 }
             } while (fetched > 0);
         }
 
-        public void DownloadFile(PortableDeviceFile file, string saveToPath)
-        {
-            IPortableDeviceContent content;
-            this._device.Content(out content);
-
-            IPortableDeviceResources resources;
-            content.Transfer(out resources);
-
-            PortableDeviceApiLib.IStream wpdStream;
-            uint optimalTransferSize = 0;
-
-            var property = new _tagpropertykey();
-            property.fmtid = new Guid(0xE81E79BE, 0x34F0, 0x41BF, 0xB5, 0x3F, 0xF1, 0xA0, 0x6A, 0xE8, 0x78, 0x42);
-            property.pid = 0;
-
-            resources.GetStream(file.Id, ref property, 0, ref optimalTransferSize, out wpdStream);
-
-            var sourceStream = (System.Runtime.InteropServices.ComTypes.IStream)wpdStream;
-
-            var filename = Path.GetFileName(file.Name);
-            FileStream targetStream = new FileStream(Path.Combine(saveToPath, filename), FileMode.Create, FileAccess.Write);
-
-            unsafe
-            {
-                var buffer = new byte[1024];
-                int bytesRead;
-                do
-                {
-                    sourceStream.Read(buffer, 1024, new IntPtr(&bytesRead));
-                    targetStream.Write(buffer, 0, 1024);
-                } while (bytesRead > 0);                
-                targetStream.Close();
-            }
-        }
-
-        public string DownloadFileToString(PortableDeviceFile file)
-        {
-            IPortableDeviceContent content;
-            this._device.Content(out content);
-
-            IPortableDeviceResources resources;
-            content.Transfer(out resources);
-
-            PortableDeviceApiLib.IStream wpdStream;
-            uint optimalTransferSize = 0;
-
-            var property = new _tagpropertykey();
-            property.fmtid = new Guid(0xE81E79BE, 0x34F0, 0x41BF, 0xB5, 0x3F, 0xF1, 0xA0, 0x6A, 0xE8, 0x78, 0x42);
-            property.pid = 0;
-
-            resources.GetStream(file.Id, ref property, 0, ref optimalTransferSize, out wpdStream);
-
-            System.Runtime.InteropServices.ComTypes.IStream sourceStream = (System.Runtime.InteropServices.ComTypes.IStream)wpdStream;
-            MemoryStream targetStream = new MemoryStream();
-            unsafe
-            {
-                var buffer = new byte[1024];
-                int bytesRead;
-                do
-                {
-                    sourceStream.Read(buffer, 1024, new IntPtr(&bytesRead));
-                    targetStream.Write(buffer, 0, 1024);
-                } while (bytesRead > 0);
-                //targetStream.Close();
-            }
-
-            StreamReader reader = new StreamReader(targetStream);
-            var text =  reader.ReadToEnd();
-            targetStream.Close();
-            return text;
-        }
-
-        private static void StringToPropVariant(
-            string value,
-            out PortableDeviceApiLib.tag_inner_PROPVARIANT propvarValue)
-        {
-            PortableDeviceApiLib.IPortableDeviceValues pValues =
-                (PortableDeviceApiLib.IPortableDeviceValues)
-                    new PortableDeviceTypesLib.PortableDeviceValuesClass();
-
-            var WPD_OBJECT_ID = new _tagpropertykey();
-            WPD_OBJECT_ID.fmtid =
-                new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC, 0xDA,
-                         0x8B, 0x60, 0xEE, 0x4A, 0x3C);
-            WPD_OBJECT_ID.pid = 2;
-
-            pValues.SetStringValue(ref WPD_OBJECT_ID, value);
-
-            pValues.GetValue(ref WPD_OBJECT_ID, out propvarValue);
-        }
-
-        public void DeleteFile(PortableDeviceFile file)
-        {
-            IPortableDeviceContent content;
-            this._device.Content(out content);
-
-            var variant = new PortableDeviceApiLib.tag_inner_PROPVARIANT();
-            StringToPropVariant(file.Id, out variant);
-
-            PortableDeviceApiLib.IPortableDevicePropVariantCollection objectIds =
-                new PortableDeviceTypesLib.PortableDevicePropVariantCollection()
-                as PortableDeviceApiLib.IPortableDevicePropVariantCollection;
-            objectIds.Add(variant);
-
-            content.Delete(0, objectIds, null);
-        }
-
         private static PortableDeviceObject WrapObject(IPortableDeviceProperties properties,
-            string objectId)
+                                                       string objectId)
         {
             IPortableDeviceKeyCollection keys;
             properties.GetSupportedProperties(objectId, out keys);
@@ -253,134 +385,32 @@ namespace PortableDevices
             IPortableDeviceValues values;
             properties.GetValues(objectId, keys, out values);
 
-            // Get the name of the object
-            string name;
-            var property = new _tagpropertykey();
-            property.fmtid = new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC,
-                                      0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
-            property.pid = 4;
-            values.GetStringValue(property, out name);
-
-            // Get the type of the object
             Guid contentType;
-            property = new _tagpropertykey();
-            property.fmtid = new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC,
-                                      0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
-            property.pid = 7;
-            values.GetGuidValue(property, out contentType);
+            values.GetGuidValue(DevicePropertyKeys.WPD_OBJECT_CONTENT_TYPE, out contentType);
 
-            var folderType = new Guid(0x27E2E392, 0xA111, 0x48E0, 0xAB, 0x0C,
-                                      0xE1, 0x77, 0x05, 0xA0, 0x5F, 0x85);
-            var functionalType = new Guid(0x99ED0160, 0x17FF, 0x4C44, 0x9D, 0x98,
-                                          0x1D, 0x7A, 0x6F, 0x94, 0x19, 0x21);
+            string uniqueID;
+            values.GetStringValue(DevicePropertyKeys.WPD_OBJECT_PERSISTENT_UNIQUE_ID, out uniqueID);
 
-            if (contentType == folderType || contentType == functionalType)
+            PortableDeviceObject deviceObject = null;
+
+            if (contentType == DeviceGUIDS.WPD_CONTENT_TYPE_FOLDER || contentType == DeviceGUIDS.WPD_CONTENT_TYPE_FUNCTIONAL_OBJECT)
             {
-                return new PortableDeviceFolder(objectId, name);
+                string name;
+                values.GetStringValue(DevicePropertyKeys.WPD_OBJECT_NAME, out name);
+                deviceObject = new PortableDeviceFolder(objectId, name);
+            }
+            else
+            {
+                // Get full name which includes file extension:
+                var fullName = default(string);
+                values.GetStringValue(DevicePropertyKeys.WPD_OBJECT_ORIGINAL_FILE_NAME, out fullName);
+                deviceObject = new PortableDeviceFile(objectId, fullName);
             }
 
-            var fullName = GetFullName(values);
+            deviceObject.PersistentId = uniqueID;
 
-            return new PortableDeviceFile(objectId, fullName);
+            return deviceObject;
         }
 
-        private static string GetFullName(IPortableDeviceValues values)
-        {
-            // Get the full name of the object (works only if it's a file and not a folder)
-            string fullName; 
-            var property = new _tagpropertykey();
-            property.fmtid = new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC,
-                                      0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
-            property.pid = 12; //WPD_OBJECT_ORIGINAL_FILE_NAME
-            values.GetStringValue(property, out fullName);
-
-            return fullName;
-        }
-
-        private IPortableDeviceValues GetRequiredPropertiesForContentType(string fileName, string parentObjectId)
-        {
-            IPortableDeviceValues values =
-                                        new PortableDeviceValues() as IPortableDeviceValues;
-
-            var WPD_OBJECT_PARENT_ID = new _tagpropertykey();
-            WPD_OBJECT_PARENT_ID.fmtid =
-                new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC,
-                            0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
-            WPD_OBJECT_PARENT_ID.pid = 3;
-            values.SetStringValue(ref WPD_OBJECT_PARENT_ID, parentObjectId);
-
-            FileInfo fileInfo = new FileInfo(fileName);
-            var WPD_OBJECT_SIZE = new _tagpropertykey();
-            WPD_OBJECT_SIZE.fmtid =
-                new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC,
-                            0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
-            WPD_OBJECT_SIZE.pid = 11;
-            values.SetUnsignedLargeIntegerValue(WPD_OBJECT_SIZE, (ulong)fileInfo.Length);
-
-            var WPD_OBJECT_ORIGINAL_FILE_NAME = new _tagpropertykey();
-            WPD_OBJECT_ORIGINAL_FILE_NAME.fmtid =
-                new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC,
-                            0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
-            WPD_OBJECT_ORIGINAL_FILE_NAME.pid = 12;
-            values.SetStringValue(WPD_OBJECT_ORIGINAL_FILE_NAME, Path.GetFileName(fileName));
-
-            var WPD_OBJECT_NAME = new _tagpropertykey();
-            WPD_OBJECT_NAME.fmtid =
-                new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC,
-                            0xDA, 0x8B, 0x60, 0xEE, 0x4A, 0x3C);
-            WPD_OBJECT_NAME.pid = 4;
-            values.SetStringValue(WPD_OBJECT_NAME, Path.GetFileName(fileName));
-
-            return values;
-        }
-
-        public void TransferContentToDevice(string fileName, string parentObjectId)
-        {
-            IPortableDeviceContent content;
-            this._device.Content(out content);
-
-
-            IPortableDeviceValues values =
-                GetRequiredPropertiesForContentType(fileName, parentObjectId);
-
-
-            PortableDeviceApiLib.IStream tempStream;
-            uint optimalTransferSizeBytes = 0;
-            content.CreateObjectWithPropertiesAndData(
-                values,
-                out tempStream,
-                ref optimalTransferSizeBytes,
-                null);
-
-            System.Runtime.InteropServices.ComTypes.IStream targetStream =
-                (System.Runtime.InteropServices.ComTypes.IStream)tempStream;
-            
-
-            try
-            {
-                using (var sourceStream =
-                    new FileStream(fileName, FileMode.Open, FileAccess.Read))
-                {
-                    var buffer = new byte[optimalTransferSizeBytes];
-                    int bytesRead;
-                    do
-                    {
-                        bytesRead = sourceStream.Read(
-                            buffer, 0, (int)optimalTransferSizeBytes);
-                        IntPtr pcbWritten = IntPtr.Zero;
-                        targetStream.Write(
-                            buffer, bytesRead, pcbWritten);
-                    } while (bytesRead > 0);
-                }
-                targetStream.Commit(0);
-            }
-            finally
-            {
-                Marshal.ReleaseComObject(tempStream);
-            }
-
-        }
-
-        #endregion
     }
 }

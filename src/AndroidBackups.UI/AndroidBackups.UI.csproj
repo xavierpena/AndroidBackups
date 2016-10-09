@@ -150,12 +150,6 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\PortableDevicesLib\PortableDevicesLib.csproj">
-      <Project>{54A55C7D-0660-48C1-ADC3-C4CD1BD39B86}</Project>
-      <Name>PortableDevicesLib</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
