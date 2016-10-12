@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidBackups.UI", "src\AndroidBackups.UI\AndroidBackups.UI.csproj", "{BD87477A-4565-43E8-8643-0ADED5424B36}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidBackups.UI", "AndroidBackups.UI\AndroidBackups.UI.csproj", "{BD87477A-4565-43E8-8643-0ADED5424B36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortableDevicesLib", "src\PortableDevicesLib\PortableDevicesLib.csproj", "{7C07331D-5E7D-45B0-BE40-510535606FFA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortableDevicesLib", "PortableDevicesLib\PortableDevicesLib.csproj", "{7C07331D-5E7D-45B0-BE40-510535606FFA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidBackups.ConsoleApp", "src\AndroidBackups.ConsoleApp\AndroidBackups.ConsoleApp.csproj", "{063CCDBD-69A0-485D-A363-03D9DC0D4445}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidBackups.ConsoleApp", "AndroidBackups.ConsoleApp\AndroidBackups.ConsoleApp.csproj", "{063CCDBD-69A0-485D-A363-03D9DC0D4445}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
