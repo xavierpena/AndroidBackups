@@ -6,3 +6,4 @@
 /src/PortableDevicesLib/bin
 /src/PortableDevicesLib/obj
 /.vs/AndroidBackups/v14/*.suo
+/src/packages

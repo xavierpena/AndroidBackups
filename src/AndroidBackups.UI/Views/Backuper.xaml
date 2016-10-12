@@ -15,13 +15,11 @@
                      ItemsSource="{Binding Devices}"
                      SelectedItem="{Binding SelectedDevice}" >
             </ComboBox>
+            <TextBlock>File tree:</TextBlock>
             <TreeView Name="FileTree"
-                      Height="180px">
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate ItemsSource="{Binding RootFileItem}">
-                        <TextBlock Text="{Binding Header}" />
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
+                      Height="180px"
+                      ItemsSource="{Binding Path=FileItems}">
+
             </TreeView>
             <Button Name="DoBackupBtn" Width="100" Height="40">Start backup</Button>
         </StackPanel>

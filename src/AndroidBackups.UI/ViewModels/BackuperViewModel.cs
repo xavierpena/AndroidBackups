@@ -1,13 +1,9 @@
 ﻿using AndroidBackups.UI.Models;
 using PortableDevicesLib;
 using PortableDevicesLib.Domain;
-using Prism.Commands;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -47,8 +43,8 @@ namespace AndroidBackups.UI.ViewModels
             }
         }
 
-        private TreeViewItem _rootFileItem;
-        public TreeViewItem RootFileItem
+        private List<TreeViewItem> _rootFileItem;
+        public List<TreeViewItem> FileItems
         {
             get { return _rootFileItem; }
             set
@@ -56,7 +52,7 @@ namespace AndroidBackups.UI.ViewModels
                 if (_rootFileItem != value)
                 {
                     _rootFileItem = value;
-                    OnPropertyChanged(nameof(RootFileItem));
+                    OnPropertyChanged(nameof(FileItems));
                 }
             }
         }
@@ -103,32 +99,48 @@ namespace AndroidBackups.UI.ViewModels
             var rootFolder = _selectedDevice.GetFullContents();
             _selectedDevice.Disconnect();
 
-            this.RootFileItem = GetTreeviewItems(rootFolder)
-                .First();
+            var rootTreeViewItem = GetTreeViewItem(rootFolder);
+            var subTreeViewItems = GetTreeViewItems(rootFolder);
+            AddItemsToTreeViewItem(rootTreeViewItem, subTreeViewItems);
+
+            this.FileItems = new List<TreeViewItem>() { rootTreeViewItem };
         }
 
-        private List<TreeViewItem> GetTreeviewItems(PortableDeviceFolder portableDeviceFolder)
+        private List<TreeViewItem> GetTreeViewItems(PortableDeviceFolder portableDeviceFolder)
         {
             var treeViewItems = new List<TreeViewItem>();
             foreach (var element in portableDeviceFolder.Files)
             {
-                var treeViewItem = new TreeViewItem();
+                var treeViewItem = GetTreeViewItem(element);
                 if (element.GetType() == typeof(PortableDeviceFolder))
                 {
-                    treeViewItem.Header = "\\" + element.Name;
-                    
                     var subFolder = (PortableDeviceFolder)element;
-                    var subTreeViewItems = GetTreeviewItems(subFolder);
-                    foreach (var subTreeViewItem in subTreeViewItems)
-                        treeViewItem.Items.Add(subTreeViewItem);
-                }
-                else
-                {
-                    treeViewItem.Header = element.Name;
+                    var subTreeViewItems = GetTreeViewItems(subFolder);
+                    AddItemsToTreeViewItem(treeViewItem, subTreeViewItems);
                 }
                 treeViewItems.Add(treeViewItem);
             }
             return treeViewItems;
+        }
+
+        private TreeViewItem GetTreeViewItem(PortableDeviceObject portableDeviceObject)
+        {
+            var treeviewItem = new TreeViewItem();
+            if (portableDeviceObject.GetType() == typeof(PortableDeviceFolder))
+            {
+                treeviewItem.Header = "\\" + portableDeviceObject.Name;
+            }
+            else
+            {
+                treeviewItem.Header = portableDeviceObject.Name;
+            }
+            return treeviewItem;
+        }
+
+        private void AddItemsToTreeViewItem(TreeViewItem treeViewItem, List<TreeViewItem> subTreeViewItems)
+        {
+            foreach (var subTreeViewItem in subTreeViewItems)
+                treeViewItem.Items.Add(subTreeViewItem);
         }
 
         private void InitSourceFolders()
