@@ -31,19 +31,34 @@ namespace AndroidBackups.ConsoleApp2
 
         private static void ProcessDeviceBackup(PortableDevice device)
         {
-            var portableDeviceService = new PortableDeviceService(device);
-
-            Console.WriteLine($"Loading device contents ...");
-            portableDeviceService.LoadDeviceContents();
-
+            // ===
+            // CONFIGURATION:
             var sourceFolderFullPaths = new string[] {
                 @"Internal storage\WhatsApp\Media\WhatsApp Images",
                 @"Internal storage\WhatsApp\Media\WhatsApp Video",
                 @"Internal storage\DCIM\Camera"
             };
 
-            var baseDestinationFolder = @"C:\Users\xavierpenya\Desktop\CopyTest";
+            var baseDestinationFolder = @"C:\Users\xavier.pena\Desktop\" + DateTime.Now.ToString("yyyy-MM-dd") + " Backup";
 
+            // ===
+            // PROCESSING:
+            var portableDeviceService = new PortableDeviceService(device);
+
+            Console.WriteLine($"Loading device contents ...");
+            portableDeviceService.LoadDeviceContents();
+
+            Console.WriteLine("Copying ...");
+            //CopyToWindows(portableDeviceService, sourceFolderFullPaths, baseDestinationFolder);
+
+            Console.WriteLine("Deleting ...");
+            DeleteFromAndroid(portableDeviceService, sourceFolderFullPaths, baseDestinationFolder);
+
+            Console.WriteLine("Done");
+        }
+
+        private static void CopyToWindows(PortableDeviceService portableDeviceService, string[] sourceFolderFullPaths, string baseDestinationFolder)
+        {
             foreach (var sourceFolder in sourceFolderFullPaths)
             {
                 var folderName = sourceFolder.Split('\\').Last();
@@ -53,7 +68,17 @@ namespace AndroidBackups.ConsoleApp2
                 TryRecreateFolder(destinationFolderFullPath);
                 portableDeviceService.CopyFolder(mtpFolder, destinationFolderFullPath);
             }
-            Console.WriteLine("Done");
+        }
+
+        private static void DeleteFromAndroid(PortableDeviceService portableDeviceService, string[] sourceFolderFullPaths, string baseDestinationFolder)
+        {
+            foreach (var sourceFolder in sourceFolderFullPaths)
+            {
+                var folderName = sourceFolder.Split('\\').Last();
+                Console.WriteLine($"Processing folder '{folderName}' ...");
+                var mtpFolder = portableDeviceService.GetSubFolder(sourceFolder);
+                portableDeviceService.DeleteFilesInFolder(mtpFolder, recursive: true);
+            }
         }
 
         private static void TryRecreateFolder(string destinationFolderFullPath)

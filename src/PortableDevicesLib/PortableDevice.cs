@@ -418,5 +418,45 @@ namespace PortableDevicesLib.Domain
             return deviceObject;
         }
 
+        #region "DELETE"
+
+        // Source: http://dl.dropbox.com/u/40603470/WPDDeletingContent.zip
+
+        public void DeleteFile(PortableDeviceFile file)
+        {
+            IPortableDeviceContent content;
+            this._device.Content(out content);
+
+            var variant = new PortableDeviceApiLib.tag_inner_PROPVARIANT();
+            StringToPropVariant(file.Id, out variant);
+
+            PortableDeviceApiLib.IPortableDevicePropVariantCollection objectIds =
+                new PortableDeviceTypesLib.PortableDevicePropVariantCollection()
+                as PortableDeviceApiLib.IPortableDevicePropVariantCollection;
+            objectIds.Add(variant);
+
+            content.Delete(0, objectIds, null);
+        }
+
+        private static void StringToPropVariant(
+    string value,
+    out PortableDeviceApiLib.tag_inner_PROPVARIANT propvarValue)
+        {
+            PortableDeviceApiLib.IPortableDeviceValues pValues =
+                (PortableDeviceApiLib.IPortableDeviceValues)
+                    new PortableDeviceTypesLib.PortableDeviceValuesClass();
+
+            var WPD_OBJECT_ID = new _tagpropertykey();
+            WPD_OBJECT_ID.fmtid =
+                new Guid(0xEF6B490D, 0x5CD8, 0x437A, 0xAF, 0xFC, 0xDA,
+                         0x8B, 0x60, 0xEE, 0x4A, 0x3C);
+            WPD_OBJECT_ID.pid = 2;
+
+            pValues.SetStringValue(ref WPD_OBJECT_ID, value);
+
+            pValues.GetValue(ref WPD_OBJECT_ID, out propvarValue);
+        }
+
+        #endregion
     }
 }

@@ -76,6 +76,29 @@ namespace PortableDevicesLib.Domain
         private bool IsFolder(PortableDeviceObject portableDeviceObject)
             => portableDeviceObject.GetType().Name == "PortableDeviceFolder";
 
+        public void DeleteFilesInFolder(PortableDeviceFolder sourceDeviceFolder, bool recursive)
+        {
+            var portableDeviceObjects = sourceDeviceFolder.Files;
+            foreach (var portableDeviceObject in portableDeviceObjects)
+            {
+                if (IsFolder(portableDeviceObject))
+                {
+                    if(recursive)
+                    {
+                        var folder = (PortableDeviceFolder)portableDeviceObject;
+                        DeleteFilesInFolder(folder, recursive);
+                    }
+                }
+                else
+                {
+                    var file = (PortableDeviceFile)portableDeviceObject;
+                    _device.Connect();
+                    _device.DeleteFile(file);
+                    _device.Disconnect();
+                }
+            }
+        }
+
         public void CopyFolder(PortableDeviceFolder sourceDeviceFolder, string destinationWindowsFolderPath)
         {
             var directoryInfo = new DirectoryInfo(destinationWindowsFolderPath);
