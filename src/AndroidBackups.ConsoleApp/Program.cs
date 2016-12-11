@@ -14,14 +14,19 @@ namespace AndroidBackups.ConsoleApp2
         static void Main(string[] args)
         {
             try
-            {
-                // Get the only connected MTP device:                
-                var service = new StandardPortableDevicesService();
-                var devices = service.Devices;
-                var device = devices.Single();                               
+            {                
+                // ===
+                // CONFIGURATION:
+                var sourceFolderFullPaths = new string[] {
+                    @"Internal storage\WhatsApp\Media\WhatsApp Images",
+                    @"Internal storage\WhatsApp\Media\WhatsApp Video",
+                    @"Internal storage\DCIM\Camera"
+                };
+                var baseDestinationFolder = @"C:\Users\xavier.pena\Desktop\" + DateTime.Now.ToString("yyyy-MM-dd") + " Backup";
 
                 // Start the backup:
-                ProcessDeviceBackup(device);
+                var portableDeviceService = GetMTPPortableDeviceService();
+                ProcessDeviceBackup(portableDeviceService, sourceFolderFullPaths, baseDestinationFolder);
             }
             catch (Exception ex)
             {
@@ -29,27 +34,27 @@ namespace AndroidBackups.ConsoleApp2
             }
         }
 
-        private static void ProcessDeviceBackup(PortableDevice device)
+        private static PortableDeviceService GetMTPPortableDeviceService()
         {
-            // ===
-            // CONFIGURATION:
-            var sourceFolderFullPaths = new string[] {
-                @"Internal storage\WhatsApp\Media\WhatsApp Images",
-                @"Internal storage\WhatsApp\Media\WhatsApp Video",
-                @"Internal storage\DCIM\Camera"
-            };
-
-            var baseDestinationFolder = @"C:\Users\xavier.pena\Desktop\" + DateTime.Now.ToString("yyyy-MM-dd") + " Backup";
-
-            // ===
-            // PROCESSING:
+            // Get the only connected MTP device:                
+            var service = new StandardPortableDevicesService();
+            var devices = service.Devices;
+            var device = devices.Single();
             var portableDeviceService = new PortableDeviceService(device);
 
+            return portableDeviceService;
+        }
+
+        private static void ProcessDeviceBackup(PortableDeviceService portableDeviceService, string[] sourceFolderFullPaths, string baseDestinationFolder)
+        {           
             Console.WriteLine($"Loading device contents ...");
             portableDeviceService.LoadDeviceContents();
 
             Console.WriteLine("Copying ...");
-            //CopyToWindows(portableDeviceService, sourceFolderFullPaths, baseDestinationFolder);
+            CopyToWindows(portableDeviceService, sourceFolderFullPaths, baseDestinationFolder);
+
+            Console.WriteLine("If you want to delete all copied files from the source, press any key ...");
+            Console.ReadKey();
 
             Console.WriteLine("Deleting ...");
             DeleteFromAndroid(portableDeviceService, sourceFolderFullPaths, baseDestinationFolder);
