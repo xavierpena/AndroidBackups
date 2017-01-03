@@ -53,13 +53,31 @@ namespace AndroidBackups.ConsoleApp2
             Console.WriteLine("Copying ...");
             CopyToWindows(portableDeviceService, sourceFolderFullPaths, baseDestinationFolder);
 
-            Console.WriteLine("If you want to delete all copied files from the source, press any key ...");
-            Console.ReadKey();
-
-            Console.WriteLine("Deleting ...");
-            DeleteFromAndroid(portableDeviceService, sourceFolderFullPaths, baseDestinationFolder);
+            if(GetUserConfirmation("Do you want to delete all copied files from the source?"))
+            {
+                Console.WriteLine("Deleting ...");
+                DeleteFromAndroid(portableDeviceService, sourceFolderFullPaths, baseDestinationFolder);
+            }
 
             Console.WriteLine("Done");
+        }
+
+
+        private static bool GetUserConfirmation(string yesNoQuestion)
+        {
+
+            ConsoleKey response;
+            do
+            {
+                Console.Write(yesNoQuestion + " [y/n] ");
+                response = Console.ReadKey(false).Key;   // true is intercept key (dont show), false is show
+                if (response != ConsoleKey.Enter)
+                    Console.WriteLine();
+
+            } while (response != ConsoleKey.Y && response != ConsoleKey.N);
+
+            return (response == ConsoleKey.Y);
+
         }
 
         private static void CopyToWindows(PortableDeviceService portableDeviceService, string[] sourceFolderFullPaths, string baseDestinationFolder)
